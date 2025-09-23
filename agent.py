@@ -6,49 +6,28 @@ Agent-as-Coder: Bank Statement Parser Generator
 import argparse
 import os
 import sys
-import subprocess
-import pandas as pd 
-import pdfplumber
-from pathlib import Path
-from typing import Dict, Optional, Tuple
-from dataclasses import dataclass
-import json
-import traceback
+from typing import List
 
-# LLM imports
-import google.generativeai as genai
-
+from dotenv import load_dotenv
+from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
-from langgraph.graph.message import add_messages
-from typing_extensions import Annotated
+from langgraph.prebuilt import ToolNode
+
+# Import the custom tools
+from tools import analyze_pdf_structure, test_parser_in_docker, save_parser_to_file
 
 
-class AgentState:
+class AgentState(dict):
     """State management for the agent"""
-    def __init__(self, target_bank: str, pdf_path: str, csv_path: str):
-        self.target_bank = target_bank
-        self.pdf_path = pdf_path
-        self.csv_path = csv_path
-        self.pdf_analysis = None
-        self.parser_code = None
-        self.test_results = None
-        self.error_message = None
-        self.attempt = 0
-        self.max_attempt = 3
-        self.success = False
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.setdefault('messages', [])
 
-class LLMClient:
-    """Gemini LLM client"""
-    def __init__(self):
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-        self.model = genai.GenerativeModel("gemini-2.5-pro")
-
-    def generate(self, prompt: str) -> str:
-        """Generate text using Gemini"""
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return f"Error generating response: {str(e)}"
-
-class BankParserAgent
+    @property
+    def messages(self) -> List(BaseMessage):
+        return self['messages']
+    
+    @messages.setter
+    def messages(self, value: List[BaseMessage]):
+        self['messages'] = value
