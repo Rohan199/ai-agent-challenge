@@ -61,17 +61,15 @@ def main(target_bank: str):
     try:
         base_path = Path('/app/data') / target_bank
         pdf_path = base_path / f'{{target_bank}} sample.pdf'
-        csv_path = base_path / f'{{target_bank}}_sample.csv'
+        csv_path = base_path / f'result.csv'
         
         # Pass the string representation of the path to the parser
         result_df = parse(str(pdf_path))
-        expected_df = pd.read_csv(str(csv_path), parse_dates=True, infer_datetime_format=True)
+        expected_df = pd.read_csv(str(csv_path), dayfirst=True, parse_dates=['Date'])
         
         # Normalization
         result_df = result_df.reset_index(drop=True).reindex(sorted(result_df.columns), axis=1)
         expected_df = expected_df.reset_index(drop=True).reindex(sorted(expected_df.columns), axis=1)
-        result_df = result_df.apply(lambda col: pd.to_numeric(col, errors='ignore'))
-        result_df = result_df.apply(lambda col: pd.to_datetime(col, errors='ignore'))
 
         if result_df.equals(expected_df):
             print("SUCCESS: DataFrames match perfectly.")
@@ -83,6 +81,9 @@ def main(target_bank: str):
             print(f"[COLUMNS] Result:   {{sorted(result_df.columns.tolist())}}")
             print(f"\\n[DATA TYPES - EXPECTED]:\\n{{expected_df.dtypes.to_string()}}")
             print(f"\\n[DATA TYPES - RESULT]:\\n{{result_df.dtypes.to_string()}}")
+            print(f"\\n[DATA SAMPLE - EXPECTED (first 5 rows)]:\\n{{expected_df.head().to_string()}}")
+            print(f"\\n[DATA SAMPLE - RESULT (first 5 rows)]:\\n{{result_df.head().to_string()}}")
+
 
     except Exception as e:
         print(f"FAILURE: An exception occurred during testing.\\n{{traceback.format_exc()}}")

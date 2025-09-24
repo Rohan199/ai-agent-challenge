@@ -56,14 +56,14 @@ def create_master_prompt(target_bank: str) -> str:
 
     3. REFINE:
         a. The test tool will return a result. If the result contains "SUCCESS", the test has passed.
-        b. If the result contains "FAILURE", you MUST analyze the error message, the diff report, and your previous code. Rewrite the entire parser function to fix the bug.
+        b. If the result contains "FAILURE", you MUST analyze the error message and traceback. Determine the source of the error. If the error is in your generated parser, rewrite it. If the error seems to be in the testing process itself or in reading the data, report the issue.
         c. Go back to step 2b and test the new, corrected code. You have a maximum of 3 attempts.
+        d. If you failed in 3 attempts, you will end the process. Respond with something like "Failed to create parser for {target_bank}. Exiting now..."
 
-    4. SAVE:
+    4. SAVE & FINISH:
         a. Once the test passes and you see the "SUCCESS" message, your final task is to call the `save_parser_to_file` tool.
         b. Pass the final, correct version of your Python code to `final_parser_code` and `{target_bank}` to `target_bank`.
-
-    After calling the save tool, your job is done. Do not call any more tools. Begin now by analyzing the PDF.
+        c. After you recieve the success message from the save tool, YOUR MISSION IS COMPLETE. Do not call any more tools. To end the process, simply respond with a final message like "Parser for {target_bank} created and saved successfully."
     """
 
 def main():
