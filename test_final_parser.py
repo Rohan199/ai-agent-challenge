@@ -44,8 +44,8 @@ def test_parser_output_matches_csv():
     # 4. Assert equality
     try:
         pd.testing.assert_frame_equal(result_df, expected_df)
-        print("✅ SUCCESS: DataFrames match perfectly!")
+        print("SUCCESS: DataFrames match perfectly!")
     except AssertionError as e:
-        print("❌ FAILURE: DataFrames do not match.")
+        print("FAILURE: DataFrames do not match.")
         # pytest.fail will automatically capture and display the detailed diff
         pytest.fail(f"DataFrame comparison failed: {e}", pytrace=False)
