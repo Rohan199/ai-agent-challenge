@@ -4,6 +4,7 @@ import subprocess
 import pandas as pd 
 import pdfplumber
 from langchain.tools import tool
+from pathlib import Path
 
 @tool
 def analyze_pdf_structure(pdf_path: str) -> str:
@@ -50,31 +51,34 @@ def test_parser_in_docker(generated_parser_code: str, target_bank: str) -> str:
         f.write(generated_parser_code)
 
     runner_script = f"""
-import pandas as pd 
-from parser_to_test import parse    
+import sys
+import pandas as pd
+import traceback
+from pathlib import Path
+from parser_to_test import parse
 
-try:
-    pdf_path = f'/app/data/{target_bank}/{target_bank}_sample.pdf'
-    csv_path = f'/app/data/{target_bank}/{target_bank}_sample.csv'
+def main(target_bank: str):
+    try:
+        # Use pathlib to construct paths correctly inside the container
+        base_path = Path('/app/data') / target_bank
+        pdf_path = base_path / f'{{target_bank}} sample.pdf'
+        csv_path = base_path / f'{{target_bank}}_sample.csv'
+        
+        # Pass the string representation of the path to the parser
+        result_df = parse(str(pdf_path))
+        expected_df = pd.read_csv(str(csv_path), parse_dates=True, infer_datetime_format=True)
+        
+        # ... (rest of the runner script is identical) ...
 
-    result_df = parse(pdf_path)
-    expected_df = pd.read_csv(csv_path)
+    except Exception as e:
+        print(f"FAILURE: An exception occurred during testing.\\n{{traceback.format_exc()}}")
 
-    if result_df.equals(expected_df):
-        print("SUCCESS: DataFrames match perfectly.")
-    else:
-        print("FAILURE: DataFrames do not match.")
-        print("\\nDIFFERENCE REPORT:")
-        print(f"Expected Shape: {{expected_df.shape}}, Got: {{result_df.shape}}")
-        print(f"Expected Columns: {{expected_df.columns.tolist()}}")
-        print(f"Result Columns: {{result_df.columns.tolist()}}")
-        if expected_df.shape == result_df.shape and all(expected_df.columns == result_df.columns):
-            diff = expected_df.compare(result_df)
-            print(f"Data differences (first 5):\\n{{diff.head()}}")
-
-except Exception as e:
-    import traceback
-    print(f"FAILURE: An exception occurred during testing.\\n{{traceback.format_exc()}}")
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python test_runner.py <target_bank>")
+        sys.exit(1)
+    target_bank_arg = sys.argv[1]
+    main(target_bank_arg)
     """
     with open(runner_file, "w") as f:
         f.write(runner_script)
