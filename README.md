@@ -8,7 +8,8 @@ This project implemets an autonomous AI agent that automatically writes, tests, 
 * Adaptable
 
 ## Agent Architecture
-    
+
+```mermaid    
 graph TD
     A[Start] --> B(1. Analyze PDF Structure);
     B --> C(2. Generate / Refine Parser Code);
@@ -19,4 +20,4 @@ graph TD
 
     style C fill:#f9f,stroke:#333,stroke-width:2px
     style D fill:#bbf,stroke:#333,stroke-width:2px
-
+```
