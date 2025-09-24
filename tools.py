@@ -59,7 +59,6 @@ from parser_to_test import parse
 
 def main(target_bank: str):
     try:
-        # Use pathlib to construct paths correctly inside the container
         base_path = Path('/app/data') / target_bank
         pdf_path = base_path / f'{{target_bank}} sample.pdf'
         csv_path = base_path / f'{{target_bank}}_sample.csv'
@@ -68,7 +67,22 @@ def main(target_bank: str):
         result_df = parse(str(pdf_path))
         expected_df = pd.read_csv(str(csv_path), parse_dates=True, infer_datetime_format=True)
         
-        # ... (rest of the runner script is identical) ...
+        # Normalization
+        result_df = result_df.reset_index(drop=True).reindex(sorted(result_df.columns), axis=1)
+        expected_df = expected_df.reset_index(drop=True).reindex(sorted(expected_df.columns), axis=1)
+        result_df = result_df.apply(lambda col: pd.to_numeric(col, errors='ignore'))
+        result_df = result_df.apply(lambda col: pd.to_datetime(col, errors='ignore'))
+
+        if result_df.equals(expected_df):
+            print("SUCCESS: DataFrames match perfectly.")
+        else:
+            print("FAILURE: DataFrames do not match.")
+            print("\\n--- DIFFERENCE REPORT ---")
+            print(f"[SHAPE] Expected: {{expected_df.shape}}, Got: {{result_df.shape}}")
+            print(f"[COLUMNS] Expected: {{sorted(expected_df.columns.tolist())}}")
+            print(f"[COLUMNS] Result:   {{sorted(result_df.columns.tolist())}}")
+            print(f"\\n[DATA TYPES - EXPECTED]:\\n{{expected_df.dtypes.to_string()}}")
+            print(f"\\n[DATA TYPES - RESULT]:\\n{{result_df.dtypes.to_string()}}")
 
     except Exception as e:
         print(f"FAILURE: An exception occurred during testing.\\n{{traceback.format_exc()}}")
@@ -90,8 +104,9 @@ if __name__ == "__main__":
                    "-v", f"{os.path.abspath(runner_file)}:/app/test_runner.py:ro",
                    "-v", f"{os.path.abspath(parser_file)}:/app/parser_to_test.py:ro",
                    "-v", f"{os.path.abspath('data')}:/app/data:ro",
-                   "parser-agent",  # Use the same image we are already running in
-                   "python", "test_runner.py"
+                   "parser-agent",              # The image to run
+                   "python", "test_runner.py",   # The script to execute inside the container
+                   target_bank
         ]
 
         proc = subprocess.run(command, capture_output=True, text=True, timeout=60)

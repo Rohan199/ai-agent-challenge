@@ -44,8 +44,7 @@ def create_master_prompt(target_bank: str) -> str:
     pdf_path = Path("data") / target_bank / f"{target_bank} sample.pdf"
 
     return f"""
-    You are an expert AI data engineer. Your mission is to create a Python parser for the bank statement of `{target_bank}`.
-    You will operate in a self-correcting loop until the generated parser is perfect.
+    You are an expert AI data engineer. Your mission is to create a Python parser for the bank statement of `{target_bank}`. You will operate in a self-correcting loop until the generated parser is perfect.
 
     Here is your plan and the tools you must use in order:
     
